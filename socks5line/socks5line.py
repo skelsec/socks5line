@@ -109,7 +109,7 @@ class SOCKS5Line:
 		
 		logger.debug('Server reply from %s : %s' % (proxy_writer.get_extra_info('peername'),repr(rep)))
 
-		if rep.BIND_ADDR == ipaddress.IPv6Address('::') or rep.BIND_ADDR == ipaddress.IPv4Address('0.0.0.0') or rep.BIND_PORT == proxy_writer.get_extra_info('sockname')[1]:
+		if rep.BIND_ADDR == ipaddress.IPv6Address('::') or rep.BIND_ADDR == ipaddress.IPv4Address('0.0.0.0') or rep.BIND_PORT == proxy_writer.get_extra_info('peername')[1]:
 			logger.debug('Same socket can be used now on %s:%d' % (proxy_writer.get_extra_info('peername')))
 			#this means that the communication can continue on the same socket!
 			logger.info('Proxy connection succeeded')
