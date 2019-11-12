@@ -55,6 +55,7 @@ class SOCKS5Line:
 
 		self.proxy_tasks = []
 		self.sock = None
+		self.ugly_event = None
 
 	async def socks5_connect(self):
 		con = asyncio.open_connection(self.proxy.ip, self.proxy.port)
@@ -177,24 +178,31 @@ class SOCKS5Line:
 			if self.sock is None:
 				server = await asyncio.start_server(self.handle_echo, self.listen_ip, self.listen_port)
 				self.listen_port = server._sockets[0].getsockname()[1] #if the inital port was 0 this is giving the actual port back!
+				if self.ugly_event is not None:
+					self.ugly_event.set()
 				await server.serve_forever()
 			else:
 				server = await asyncio.start_server(self.handle_echo, sock = self.sock)
+				if self.ugly_event is not None:
+					self.ugly_event.set()
 				await server.serve_forever()
 		except:
 			traceback.print_exc()
 			
 
 	def run_newthread(self, soc = None):
-		from threading import Thread
+		from threading import Thread, Event
 		import time
 		if soc is not None:
 			self.sock = soc
 
+		self.ugly_event = Event()
 		loop = asyncio.new_event_loop()
 		t = Thread(target=breakout_from_thread, args=(loop,), daemon=True)
 		t.start()
 		asyncio.run_coroutine_threadsafe(self.run(), loop)
 
 		### TODO: remove this ASAP. currently it's needed to wait for the run() to start...
-		time.sleep(1)
+		### problem is that ldap3 is not async, but everything else is...
+		self.ugly_event.wait(10)
+
